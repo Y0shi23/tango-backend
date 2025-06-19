@@ -78,6 +78,7 @@ func main() {
 		protected.Use(auth.Middleware())
 		{
 			protected.GET("/profile", auth.ProfileHandler)
+			protected.PUT("/profile", auth.UpdateProfileHandler)
 		}
 	}
 
