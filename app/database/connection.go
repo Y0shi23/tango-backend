@@ -26,7 +26,7 @@ func Connect(dbConfig config.DatabaseConfig) error {
 	}
 
 	// マイグレーション実行
-	if err := DB.AutoMigrate(&models.User{}); err != nil {
+	if err := DB.AutoMigrate(&models.User{}, &models.Word{}); err != nil {
 		return fmt.Errorf("failed to migrate database: %w", err)
 	}
 
