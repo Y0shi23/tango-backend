@@ -17,9 +17,9 @@ func RegisterHandler(c *gin.Context) {
 		return
 	}
 
-	// ユーザー名の重複チェック
+	// ユーザー名またはメールの重複チェック
 	var existingUser models.User
-	err := database.GetDB().QueryRow("SELECT id FROM users WHERE username = $1 OR email = $2", req.Username, req.Email).Scan(&existingUser.ID)
+	err := database.GetDB().Where("username = ? OR email = ?", req.Username, req.Email).First(&existingUser).Error
 	if err == nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "Username or email already exists"})
 		return
@@ -33,30 +33,25 @@ func RegisterHandler(c *gin.Context) {
 	}
 
 	// ユーザーをデータベースに挿入
-	var userID int
-	err = database.GetDB().QueryRow(
-		"INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id",
-		req.Username, req.Email, hashedPassword,
-	).Scan(&userID)
-	if err != nil {
+	user := models.User{
+		Username: req.Username,
+		Email:    req.Email,
+		Password: hashedPassword,
+	}
+
+	if err := database.GetDB().Create(&user).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
 		return
 	}
 
 	// JWTトークンを生成
-	token, err := GenerateJWT(userID, req.Username)
+	token, err := GenerateJWT(user.ID, user.Username)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return
 	}
 
 	// レスポンスを返す
-	user := models.User{
-		ID:       userID,
-		Username: req.Username,
-		Email:    req.Email,
-	}
-
 	response := models.AuthResponse{
 		Message: "User created successfully",
 		Token:   token,
@@ -76,10 +71,7 @@ func LoginHandler(c *gin.Context) {
 
 	// ユーザーをデータベースから取得
 	var user models.User
-	err := database.GetDB().QueryRow(
-		"SELECT id, username, email, password FROM users WHERE username = $1",
-		req.Username,
-	).Scan(&user.ID, &user.Username, &user.Email, &user.Password)
+	err := database.GetDB().Where("username = ?", req.Username).First(&user).Error
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
@@ -110,13 +102,20 @@ func LoginHandler(c *gin.Context) {
 
 // ProfileHandler はプロフィール取得ハンドラーです（認証が必要）
 func ProfileHandler(c *gin.Context) {
-	userID := c.GetInt("user_id")
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found"})
+		return
+	}
+
+	userIDUint, ok := userID.(uint)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID type"})
+		return
+	}
 
 	var user models.User
-	err := database.GetDB().QueryRow(
-		"SELECT id, username, email FROM users WHERE id = $1",
-		userID,
-	).Scan(&user.ID, &user.Username, &user.Email)
+	err := database.GetDB().Select("id, username, email").Where("id = ?", userIDUint).First(&user).Error
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return

@@ -9,7 +9,7 @@ import (
 
 // JWTクレーム構造体
 type Claims struct {
-	UserID   int    `json:"user_id"`
+	UserID   uint   `json:"user_id"`
 	Username string `json:"username"`
 	jwt.RegisteredClaims
 }
@@ -22,7 +22,7 @@ func InitJWT(secret string) {
 }
 
 // GenerateJWT はJWTトークンを生成します
-func GenerateJWT(userID int, username string) (string, error) {
+func GenerateJWT(userID uint, username string) (string, error) {
 	expirationTime := time.Now().Add(24 * time.Hour)
 	claims := &Claims{
 		UserID:   userID,

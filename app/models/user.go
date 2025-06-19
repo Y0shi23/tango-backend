@@ -2,10 +2,12 @@ package models
 
 // User構造体
 type User struct {
-	ID       int    `json:"id"`
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"-"` // JSONには含めない
+	ID        uint   `json:"id" gorm:"primary_key"`
+	Username  string `json:"username" gorm:"not null;unique"`
+	Email     string `json:"email" gorm:"not null;unique"`
+	Password  string `json:"-" gorm:"not null"` // JSONには含めない
+	CreatedAt int64  `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt int64  `json:"updated_at" gorm:"autoUpdateTime"`
 }
 
 // ログインリクエスト構造体
@@ -23,7 +25,7 @@ type RegisterRequest struct {
 
 // ユーザーレスポンス構造体（パスワードを除外）
 type UserResponse struct {
-	ID       int    `json:"id"`
+	ID       uint   `json:"id"`
 	Username string `json:"username"`
 	Email    string `json:"email"`
 }
