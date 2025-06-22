@@ -57,10 +57,12 @@ func Load() *Config {
 			AllowOrigins: []string{
 				"http://localhost:3000",
 				"http://127.0.0.1:3000",
-				"http://10.0.2.2:8080",  // Android エミュレータからホストへ
-				"http://localhost:8080", // ローカルホスト
-				"http://192.168.1.0/24", // ローカルネットワーク（実機用）
-				"*",                     // 開発時のみ - 本番環境では削除してください
+				"http://10.0.2.2:8080",             // Android エミュレータからホストへ
+				"http://localhost:8080",            // ローカルホスト
+				"http://192.168.1.0/24",            // ローカルネットワーク（実機用）
+				"http://tango.fumi042-server.top",  // 本番ドメイン
+				"https://tango.fumi042-server.top", // 本番ドメイン（HTTPS）
+				"*",                                // 開発時のみ - 本番環境では削除してください
 			},
 		},
 	}
